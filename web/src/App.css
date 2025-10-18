@@ -1,2 +1,11 @@
 html, body, #root, .app-root { height: 100%; margin: 0; }
 .app-root { display: flex; }
+
+.maplibregl-popup-content {
+  color: #111;
+  background: #fff;
+}
+.maplibregl-popup-tip {
+  border-top-color: #fff;
+  border-bottom-color: #fff;
+}

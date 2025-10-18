@@ -1,0 +1,10 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type":"Feature","properties":{"id":"eq-1","severity":4.1,"title":"M4.1 - NV"},"geometry":{"type":"Point","coordinates":[-116.9, 38.8]}},
+    { "type":"Feature","properties":{"id":"eq-2","severity":5.2,"title":"M5.2 - AK"},"geometry":{"type":"Point","coordinates":[-151.0, 63.1]}},
+    { "type":"Feature","properties":{"id":"eq-3","severity":3.6,"title":"M3.6 - CA"},"geometry":{"type":"Point","coordinates":[-121.5, 37.7]}},
+    { "type":"Feature","properties":{"id":"eq-4","severity":6.1,"title":"M6.1 - PR Trench"},"geometry":{"type":"Point","coordinates":[-66.3, 19.7]}},
+    { "type":"Feature","properties":{"id":"eq-5","severity":2.9,"title":"M2.9 - OK"},"geometry":{"type":"Point","coordinates":[-97.5, 35.5]}}
+  ]
+}

@@ -1,0 +1,9 @@
+
+.maplibregl-popup-content {
+  color: #111 !important;
+  background: #fff !important;
+}
+.maplibregl-popup-tip {
+  border-top-color: #fff !important;
+  border-bottom-color: #fff !important;
+}
