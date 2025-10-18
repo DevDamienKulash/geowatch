@@ -1,7 +1,10 @@
+/* CommonJS requires (no ESM imports here) */
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const axios = require('axios');
 
+/* Type aliases to avoid ESM import syntax under verbatimModuleSyntax */
 type Request = import('express').Request;
 type Response = import('express').Response;
 
@@ -10,47 +13,95 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Minimal Incident type (we’ll evolve this)
+/* --- Domain types --- */
 type Incident = {
   id: string;
   type: 'earthquake';
-  severity: number;
-  ts: number; // epoch ms
-  geometry: { type: 'Point'; coordinates: [number, number] };
+  severity: number; // magnitude used as severity
+  ts: number;       // epoch ms
+  geometry: { type: 'Point'; coordinates: [number, number] } | any; // USGS gives depth as z; keep as-is
   props: { title?: string; mag?: number; depth?: number; place?: string; url?: string };
 };
 
-// Mock data (same vibe as your frontend)
-const now = Date.now();
-const hours = (h: number) => now - h * 3600 * 1000;
+/* --- Simple 60s in-memory cache to avoid hammering USGS --- */
+type CacheEntry = {
+  key: string;
+  fetchedAt: number;
+  data: GeoJSON.FeatureCollection;
+  count: number;
+};
+let cache: CacheEntry | null = null;
+const CACHE_TTL_MS = 60 * 1000;
 
-const mockIncidents: Incident[] = [
-  { id: 'eq-1', type: 'earthquake', severity: 4.1, ts: hours(2),  geometry: { type: 'Point', coordinates: [-116.9, 38.8] }, props: { title: 'M4.1 - NV' } },
-  { id: 'eq-2', type: 'earthquake', severity: 5.2, ts: hours(8),  geometry: { type: 'Point', coordinates: [-151.0, 63.1] }, props: { title: 'M5.2 - AK' } },
-  { id: 'eq-3', type: 'earthquake', severity: 3.6, ts: hours(20), geometry: { type: 'Point', coordinates: [-121.5, 37.7] }, props: { title: 'M3.6 - CA' } },
-  { id: 'eq-4', type: 'earthquake', severity: 6.1, ts: hours(50), geometry: { type: 'Point', coordinates: [-66.3, 19.7] }, props: { title: 'M6.1 - PR Trench' } },
-  { id: 'eq-5', type: 'earthquake', severity: 2.9, ts: hours(80), geometry: { type: 'Point', coordinates: [-97.5, 35.5] }, props: { title: 'M2.9 - OK' } }
-];
+/* --- USGS fetcher ---
+   Uses FDSN API: /fdsnws/event/1/query?format=geojson&starttime=...&endtime=...
+   Docs: https://earthquake.usgs.gov/fdsnws/event/1/
+*/
+async function fetchUSGSIncidents(sinceHours: number): Promise<{ fc: GeoJSON.FeatureCollection; count: number }> {
+  const end = new Date(); // now
+  const start = new Date(end.getTime() - sinceHours * 3600 * 1000);
 
-// Health
+  const params = {
+    format: 'geojson',
+    starttime: start.toISOString(),
+    endtime: end.toISOString(),
+    orderby: 'time', // most recent first
+    limit: 20000     // generous upper bound; USGS caps internally
+    // Optional later: minmagnitude, bbox (minlatitude, maxlatitude, minlongitude, maxlongitude)
+  };
+
+  const resp = await axios.get('https://earthquake.usgs.gov/fdsnws/event/1/query', { params });
+  const features = (resp.data?.features ?? []) as any[];
+
+  // Map USGS -> Incident FeatureCollection used by your frontend
+  const fc: GeoJSON.FeatureCollection = {
+    type: 'FeatureCollection',
+    features: features.map((f) => ({
+      type: 'Feature',
+      properties: {
+        id: f.id,
+        severity: typeof f.properties?.mag === 'number' ? f.properties.mag : 0,
+        title: f.properties?.title ?? 'Earthquake',
+        ts: typeof f.properties?.time === 'number' ? f.properties.time : Date.now()
+      },
+      geometry: f.geometry // Point [lon, lat, depth?]
+    }))
+  };
+
+  return { fc, count: features.length };
+}
+
+/* --- Health / status --- */
 app.get('/api/status', (_req: Request, res: Response) => {
-  res.json({ ok: true, time: new Date().toISOString(), count: mockIncidents.length });
+  res.json({
+    ok: true,
+    time: new Date().toISOString(),
+    lastFetchIso: cache?.fetchedAt ? new Date(cache.fetchedAt).toISOString() : null,
+    lastFetchCount: cache?.count ?? null
+  });
 });
 
-// Incidents (supports ?since=24 for hours filtering)
-app.get('/api/incidents', (req: Request, res: Response) => {
-  const sinceH = Number(req.query.since || 24);
-  const cutoff = Date.now() - sinceH * 3600 * 1000;
-  const filtered = mockIncidents.filter(i => i.ts >= cutoff);
+/* --- Incidents endpoint (now live from USGS, with a tiny cache) ---
+   Query: /api/incidents?since=24 (hours)
+*/
+app.get('/api/incidents', async (req: Request, res: Response) => {
+  const sinceH = Math.max(1, Number(req.query.since || 24)); // clamp at >=1h
+  const cacheKey = `since=${sinceH}`;
 
-  res.json({
-    type: 'FeatureCollection',
-    features: filtered.map(i => ({
-      type: 'Feature',
-      properties: { id: i.id, severity: i.severity, title: i.props.title, ts: i.ts },
-      geometry: i.geometry
-    }))
-  });
+  // Serve from cache if fresh
+  if (cache && cache.key === cacheKey && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
+    return res.json(cache.data);
+  }
+
+  try {
+    const { fc, count } = await fetchUSGSIncidents(sinceH);
+    cache = { key: cacheKey, fetchedAt: Date.now(), data: fc, count };
+    res.json(fc);
+  } catch (err: any) {
+    // On failure, return a clear error while not blowing up the server
+    console.error('USGS fetch failed:', err?.message || err);
+    res.status(502).json({ error: 'Failed to fetch USGS data' });
+  }
 });
 
 const PORT = process.env.PORT || 3001;

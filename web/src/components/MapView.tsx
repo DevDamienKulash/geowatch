@@ -6,25 +6,15 @@ import TimeFilter from './TimeFilter';
 
 type WindowHours = 1 | 6 | 24 | 72;
 
-const now = Date.now();
-const hours = (h: number) => now - h * 3600 * 1000;
-
-const mockData: GeoJSON.FeatureCollection = {
-  type: 'FeatureCollection',
-  features: [
-    { type: 'Feature', properties: { id: 'eq-1', severity: 4.1, title: 'M4.1 - NV', ts: hours(2) },  geometry: { type: 'Point', coordinates: [-116.9, 38.8] } },
-    { type: 'Feature', properties: { id: 'eq-2', severity: 5.2, title: 'M5.2 - AK', ts: hours(8) },  geometry: { type: 'Point', coordinates: [-151.0, 63.1] } },
-    { type: 'Feature', properties: { id: 'eq-3', severity: 3.6, title: 'M3.6 - CA', ts: hours(20) }, geometry: { type: 'Point', coordinates: [-121.5, 37.7] } },
-    { type: 'Feature', properties: { id: 'eq-4', severity: 6.1, title: 'M6.1 - PR Trench', ts: hours(50) }, geometry: { type: 'Point', coordinates: [-66.3, 19.7] } },
-    { type: 'Feature', properties: { id: 'eq-5', severity: 2.9, title: 'M2.9 - OK', ts: hours(80) }, geometry: { type: 'Point', coordinates: [-97.5, 35.5] } }
-  ]
-};
+const API_BASE = 'http://localhost:3001'; // change later to env var for prod
 
 export default function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const layerRef = useRef<IncidentsLayer | null>(null);
   const [win, setWin] = useState<WindowHours>(24);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Create the map once
   useEffect(() => {
@@ -41,7 +31,7 @@ export default function MapView() {
 
     map.on('load', () => {
       layerRef.current = new IncidentsLayer(map);
-      applyFilteredData(); // initial draw
+      fetchAndRender(win); // initial draw
     });
 
     return () => {
@@ -52,29 +42,59 @@ export default function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Helper to filter and mount data based on selected window
-  const applyFilteredData = () => {
+  // Fetch incidents from API and mount to the layer
+  const fetchAndRender = async (hours: number) => {
     if (!layerRef.current) return;
-    const cutoff = Date.now() - win * 3600 * 1000;
-    const filtered: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: mockData.features.filter(f => {
-        const p = f.properties as any;
-        return typeof p?.ts === 'number' && p.ts >= cutoff;
-      })
-    };
-    layerRef.current.mount(filtered);
+    setLoading(true);
+    setErrorMsg(null);
+
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 10000); // 10s safety
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/incidents?since=${hours}`, {
+        signal: controller.signal
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = (await resp.json()) as GeoJSON.FeatureCollection;
+      layerRef.current.mount(data);
+    } catch (err: any) {
+      console.error('Failed to fetch incidents:', err);
+      setErrorMsg(err?.message ?? 'Failed to load incidents');
+    } finally {
+      clearTimeout(t);
+      setLoading(false);
+    }
   };
 
-  // Re-apply when the time window changes
+  // Re-fetch when the time window changes
   useEffect(() => {
-    applyFilteredData();
+    fetchAndRender(win);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [win]);
 
   return (
     <>
       <TimeFilter value={win} onChange={setWin} />
+      {/* Simple status pill */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          zIndex: 10,
+          background: 'rgba(255,255,255,0.95)',
+          padding: '6px 10px',
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+          fontSize: 12
+          
+        }}
+        aria-live="polite"
+      >
+        {loading ? 'Loading incidents…' : errorMsg ? `Error: ${errorMsg}` : 'Data loaded'}
+      </div>
+
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     </>
   );
