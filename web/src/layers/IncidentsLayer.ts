@@ -112,7 +112,7 @@ this.map.on('click', this.clusterId, (e) => {
         const title = p?.title ?? 'Incident';
         const sev = p?.severity ?? '—';
 
-        new maplibregl.Popup()
+        new maplibregl.Popup({closeButton: false, closeOnClick: true})
           .setLngLat([lng, lat])
           .setHTML(`<strong>${title}</strong><br/>Severity: ${sev}`)
           .addTo(this.map);
