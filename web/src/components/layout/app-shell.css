@@ -196,3 +196,38 @@ html, body, #root, .shell, .shell__frame, .shell__left {
 }
 .sidebar-scroll::-webkit-scrollbar { width: 10px; }
 .sidebar-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+/* Legend polish */
+.legend { font-size: 13px; color: #0b1220; }
+.legend__heading { margin: 0 0 6px 0; }
+
+.legend__card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+}
+.legend__card + .legend__card { margin-top: 12px; }
+
+.legend__row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.legend__text { display: grid; gap: 2px; }
+.legend__title { font-weight: 700; line-height: 1.2; }
+.legend__muted { color: #6b7280; font-size: 12px; line-height: 1.2; }
+
+.legend__scale {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.legend__scale-row {
+  display: flex;
+  align-items: center;
+}
+.legend__label { font-size: 13px; }
