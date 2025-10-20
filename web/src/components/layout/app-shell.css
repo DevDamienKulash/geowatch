@@ -1,0 +1,198 @@
+/* text color for white panels */
+.shell__header,
+.shell__left,
+.shell__right,
+.shell__top,
+.shell__content {
+  color: #0b1220;
+}
+.shell__top .chip,
+.shell__left button,
+.shell__right button {
+  color: #0b1220;
+}
+
+/* layout tokens */
+.shell {
+  --sidebar-w: 320px;
+  --right-w: 260px;
+  --gap: 16px;
+  --radius: 16px;
+
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  gap: var(--gap);
+  padding: clamp(12px, 2vw, 24px);
+  padding-top: calc(var(--gap) * 2);
+  box-sizing: border-box;
+  background: var(--bg, #0f172a);
+  min-height: 0;              /* ↓ grid overflow fixes */
+}
+
+.shell__header {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  height: 56px;
+}
+
+.shell__frame {
+  max-width: 1700px;          /* comfy width */
+  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;              /* important! */
+
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+
+  display: grid;
+  grid-template-areas: "left main right";
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--right-w);
+  gap: clamp(12px, 1.5vw, 20px);
+  padding: clamp(12px, 1.5vw, 20px);
+  box-sizing: border-box;
+}
+
+/* panels */
+.shell__left {
+  grid-area: left;
+  display: grid;                      /* ← two rows: controls + list */
+  grid-template-rows: auto 1fr;
+  min-height: 0;                      /* allow inner scroll */
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 12px;
+  overflow: hidden;
+}
+.shell__right {
+  grid-area: right;
+  overflow: auto;
+  min-height: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 12px;
+}
+
+/* the scrollable area in the left panel */
+.sidebar-scroll {
+  height: 100%;                 /* fill the second grid row */
+  min-height: 0;                /* allow it to become a scroll container */
+  max-height: 100%;
+  overflow: auto;               /* <— enables scrolling */
+  overscroll-behavior: contain; /* prevent page “rubber banding” */
+  -webkit-overflow-scrolling: touch; /* momentum scroll on iOS */
+  scrollbar-width: thin;                 /* Firefox */
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* main: top row + map row */
+.shell__main {
+  display: grid;
+  grid-template-rows: auto minmax(640px, 1fr);
+  min-height: 0;
+}
+
+/* chip bar ABOVE the map (full width of main column) */
+.shell__top {
+  justify-self: stretch;
+  align-self: start;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* center chips, keep status on right */
+.chipbar {                             /* your Toolbar wrapper */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.chipbar__center { justify-self: center; }
+.chipbar__right  { justify-self: end; }
+
+/* horizontal chip group */
+.chip-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* map */
+.shell__content {
+  position: relative;
+  height: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+/* readable selects on white */
+.shell__left select,
+.shell__right select {
+  color: #0b1220;
+  background: #fff;
+}
+
+/* responsive */
+@media (max-width: 1280px) {
+  .shell__frame {
+    grid-template-areas:
+      "left main"
+      "right right";
+    grid-template-columns: var(--sidebar-w) minmax(0,1fr);
+  }
+}
+@media (max-width: 860px) {
+  .shell__frame {
+    grid-template-areas:
+      "main"
+      "left"
+      "right";
+    grid-template-columns: 1fr;
+  }
+  .chipbar { grid-template-columns: 1fr; row-gap: 8px; }
+  .chipbar__center, .chipbar__right { justify-self: center; }
+}
+/* Make sure all parent containers can shrink */
+html, body, #root, .shell, .shell__frame, .shell__left {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The left panel: static controls + scrollable list */
+.shell__left {
+  display: grid;
+  grid-template-rows: auto 1fr;  /* controls then list */
+  align-content: start;          /* content anchored to the top */
+  align-items: start;            /* each child aligns to start */
+  overflow: hidden;              /* the panel itself doesn't scroll */
+  min-height: 0;                 /* allow row 2 to become a scroll container */
+}
+
+/* The list area SCROLLS */
+.sidebar-scroll {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+
+  /* nice scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.sidebar-scroll::-webkit-scrollbar { width: 10px; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }

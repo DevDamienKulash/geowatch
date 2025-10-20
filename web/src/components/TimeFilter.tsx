@@ -11,7 +11,7 @@ export default function TimeFilter({
   onChange: (v: WindowHours) => void;
 }) {
   return (
-    <div className="toolbar" role="toolbar" aria-label="Time window">
+    <div className="chip-group" role="toolbar" aria-label="Time window">
       {OPTIONS.map((h) => {
         const isActive = value === h;
         return (

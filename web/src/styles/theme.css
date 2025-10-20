@@ -52,30 +52,38 @@ body {
   box-shadow: var(--shadow-1);
 }
 .chip {
-  padding: 6px 12px;
-  border-radius: var(--chip-radius);
-  border: 1px solid var(--border);
+  border: 1px solid #d1d5db;
   background: #fff;
-  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 999px;
   font-weight: 600;
-  cursor: pointer;
   line-height: 1;
-  transition: transform 0.02s ease, background 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+  transition: background .15s ease, box-shadow .15s ease, transform .05s ease;
 }
-.chip:hover { transform: translateY(-1px); }
-.chip:focus-visible { outline: 3px solid var(--primary-weak); outline-offset: 2px; }
-.chip--active { border-color: var(--primary); background: var(--primary-weak); }
+.chip:hover { background: #f3f4f6; }
+.chip:active { transform: translateY(1px); }
+.chip--active {
+  background: #e5edff;
+  border-color: #c7d2fe;
+}
+.chip:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
 
 /* Status badge (top-right) */
 .status-badge {
-  position: absolute;
-  top: calc(var(--topbar-h) + 8px);   
-  right: 12px;
-  z-index: 10;
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 10px; border-radius: var(--radius);
-  background: var(--panel-ghost); border: 1px solid var(--border);
-  color: var(--text); font-size: 12px; box-shadow: var(--shadow-1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #0b1220;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05);
 }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
 .dot--ok { background: var(--success); }
@@ -100,4 +108,23 @@ body {
 .topbar__meta {
   display: inline-flex; align-items: center; gap: 8px; font-size: 13px;
 }
+.shell__left, .shell__right {
+  scrollbar-width: thin;             /* Firefox */
+  scrollbar-color: #cbd5e1 transparent;
+}
+.shell__left::-webkit-scrollbar,
+.shell__right::-webkit-scrollbar { height: 10px; width: 10px; }
+.shell__left::-webkit-scrollbar-thumb,
+.shell__right::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+.shell__left h3, .shell__right h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
 
+/* 5) Subtle separators where needed */
+.hr {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0;
+}
