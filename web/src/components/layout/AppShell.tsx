@@ -1,5 +1,4 @@
 // web/src/components/layout/AppShell.tsx
-import React from 'react';
 import type { ReactNode } from 'react';
 import './app-shell.css';
 

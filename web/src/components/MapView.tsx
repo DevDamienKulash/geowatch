@@ -6,7 +6,9 @@ import { enrichWithState } from '../utils/geo';
 
 type WindowHours = 1 | 6 | 24 | 72;
 
-const API_BASE = 'http://localhost:3001';
+const BASE = import.meta.env.VITE_API_BASE_URL;
+await fetch(`${BASE}/incidents?since=24`);
+
 
 export default function MapView({
   win,
@@ -50,7 +52,7 @@ export default function MapView({
       onLoading(true);
       onError(null);
       try {
-        const resp = await fetch(`${API_BASE}/api/incidents?since=${win}`, { signal: controller.signal });
+        const resp = await fetch(`${BASE}/api/incidents?since=${win}`, { signal: controller.signal });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const fc = (await resp.json()) as GeoJSON.FeatureCollection;
         const enriched = enrichWithState(fc);
