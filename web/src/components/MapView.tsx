@@ -1,6 +1,6 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { IncidentsLayer } from '../layers/IncidentsLayer';
 import { enrichWithState } from '../utils/geo';
 

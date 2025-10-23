@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 type WindowHours = 1 | 6 | 24 | 72;
 const OPTIONS: WindowHours[] = [1, 6, 24, 72];

@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export default function StatusBadge({ loading, error }: { loading: boolean; error?: string | null }) {
   return (
